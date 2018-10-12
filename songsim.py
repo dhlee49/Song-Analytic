@@ -1,58 +1,50 @@
-import sys
-import os
-import dstats
-import songprofiling
+#csv for csvfile process
+import csv
+#argparser
 import argparse
-from dstats import token_words
+from pprint import pprint
+#tokenizing lyric
+from dstats import token_words,unique_set
+#term_occurance counter
 from songprofiling import term_occurance
 def process(songdata,song_id1,song_id2):
     #make id2 comes later than id1 just for simplicity
     song_id1,song_id2 = fix(song_id1,song_id2)
-    #dictionaries for words in lyric
-    dict1 = defaultdict(int)
-    dict2 = defaultdict(int)
+    #sets for words in lyric
+    set1 = {}
+    set2 = {}
     csv_songdata = csv.DictReader(songdata)
     counter = 0
     for row in csv_songdata:
         counter += 1
         if counter == song_id1:
-            dict1 = term_occurnace(token_words(row['text']))
+            set1 = unique_set(token_words(row['text']))
         if counter == song_id2:
-            dict2 = term_occurance(token_words(row['text']))
+            set2 = unique_set(token_words(row['text']))
             break;
-    return jaccard(dict1,dict2);
+    pprint('union of 2 sets is : %d' % len(set1 | set2))
+    pprint('intersection of 2 sets is : %d' % len(set1 & set2))
+    return jaccard(set1,set2);
 def fix(a,b):
+#in : 2 integer a,b
+#return : a,b where a < b
     if a > b:
         temp  = a
         a = b
         b = temp
     return a,b
-def jaccard(song1,song2):
-#in: dictionary of song1, song2
-#return : float value equal to intersect(song1,song2) / union(song1,song2)
-    value   = 0
-    num = intersect(song1,song2)
-    denom = union(song1,song2)
-    return num/denom
-def intersect(song1,song2):
-    sum = 0
-    for key in song1:
-        if key in song2.keys():
-            sum += 1
-    return sum
-def union(song1,song2):
-    sum = len(song1)
-    for key in song2:
-        if key not in song1.keys():
-            sum += 1
-    return sum
+def jaccard(set1,set2):
+#in: 2 sets : set1, set2
+#return : float value(with prec : 5) equal to intersect(set1,set2) / union(set1,set2)
+    num = len(set1 & set2)
+    denom = len(set1 | set2)
+    return round(num/denom,5)
 def main():
     parser = argparse.ArgumentParser(description = 'Takes songdata(in csv), and 2 song_id then print jaccard value of the 2 song')
-    parser.add_argument('--songdata',action="store",type = FileType(mode = 'r',encoding = 'UTF-8'), help = 'csvfile that has format {"artist","song(title)","link","text"}')
-    parser.add_argument('--song_id1',action="store",type = int, help = 'song_id : Integer n representing nth song in the data')
-    parser.add_argument('--song_id2',action="store",type = int, help = 'song_id : Integer n representing nth song in the data')
-    parser.set_defaults(func = process)
+    parser.add_argument("songdata",type = argparse.FileType('r'), help = 'csvfile that has format {"artist","song(title)","link","text"}')
+    parser.add_argument("song_id1",type = int, help = ' song_id1 : Integer n representing nth song in the data')
+    parser.add_argument("song_id2",type = int, help = ' song_id2 : Integer n representing nth song in the data')
     args = parser.parse_args()
-    print(args)
+    print(process(args.songdata, args.song_id1,args.song_id2))
 if __name__ == "__main__":
     main()

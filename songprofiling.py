@@ -18,27 +18,33 @@ def term_occurance(n_lyric):
     for term in n_lyric:
         n_to[term] += 1
     return n_to
+
 def doc_occurance(n_lyric, doc_occ):
-#in: lyric - list of processed(regexp/stopword) words in row[text]
-#return modified doc_freq
+#in: lyric- set of processed(regexp/stopword) words in row[text],
+#    and word occurance(per row['text'])in entire document
+#return modified doc_occ
     unique_lyric = unique_set(n_lyric)
     for term in unique_lyric:
         doc_occ[term] += 1
     return doc_occ
+
 def to_and_do(csvfile):
 #in: csvfile from csvDictReader
-#return list of term_occurance in lyric, term_occurance in doc
+#return list of term_occurance in lyric, term_occurance in doc, list of names
     n_t_o = []
+    n_n_list = []
     n_d_o = defaultdict(int)
     for row in csvfile:
         #process input lyric('text') into list of words without stopwords/puncutations
         lyric = token_words(row['text'])
+        n_n_list.append(row['song'])
         n_t_o.append(term_occurance(lyric))
         doc_occurance(lyric,n_d_o)
-    return n_t_o,n_d_o
+    return n_t_o,n_d_o,n_n_list
 def tf_idf(t_o,d_o,size):
 #in: term occurance in lyric, term_occurance in doc, size of entire document
-#
+#prints tf_idf value of specfic song given the term occurance of the song,document occurance, and the size of entire document
+#return: none
     word_score = defaultdict(int)
     for k in t_o:
         #Limited precision to 5 digits after decimal point
@@ -51,13 +57,17 @@ def tf_idf(t_o,d_o,size):
         result =  sorted(word_score.items(),key = lambda x : x[1], reverse = True)
     else :
         result = sorted(word_score.items(),key = lambda x : x[1], reverse = True)[:50]
+
     pprint(result)
     return
 def main():
+    #csvfile in
     song_data = csv.DictReader(sys.stdin)
-    t_o,d_o = to_and_do(song_data)
-    #iterate over list of word_occurance dictionary
+    #process csvfile and generate t_o : list of dictionaries in
+    t_o,d_o,n_list= to_and_do(song_data)
+    list_itr = iter(n_list)
     for ele in t_o:
+        print('tf_idf for song title: ', next(list_itr))
         tf_idf(ele,d_o,len(t_o))
 if __name__ == "__main__":
     main()

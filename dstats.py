@@ -1,4 +1,24 @@
 #!/usr/bin/env python3
+#In docker running start.sh will download necessary python libraries
+#which are matplotlib, nltk, nltk corpus(for stopwords)
+#below : codes for start.sh and 1 other file for running start.sh
+
+#start.sh:
+#ROOT="$(dirname "${BASH_SOURCE[0]}")"
+#
+#cd "$ROOT"
+#source "$ROOT/pyinstall.sh"
+#[[ $# -gt 0 ]] && exec "$@"
+
+#where pyinstall.sh:
+#if [[ -f ./requirements.txt ]]; then
+#  pip install --no-cache-dir -r ./requirements.txt
+#else
+#  pip install matplotlib
+#  pip install nltk
+#  pip install nltk corpus
+#  pip freeze > requirements.txt
+#fi
 
 #for sys input
 import sys
@@ -21,12 +41,19 @@ def unique_set(list_in):
 #in: list with potential redundancy
 #return: list with unique elements
 
-    u_set = []
+    u_set = set()
     for ele in list_in:
         # check if ele is already in unique list
         if ele not in u_set:
-            u_set.append(ele)
+            u_set.add(ele)
     return u_set
+def check_nltk(*args):
+    import nltk
+    try:
+        nltk.data.find('stopwords')
+        return
+    except LookupError:
+        nltk.download('stopwords')
 
 def token_words(lyric):
 #in: lyric(element of row['text'])
@@ -49,7 +76,7 @@ def process(songcsv):
 #        dictionary of artist : number of songs by artist
 #                      artist : sum of unique words in all songs
 #                      artist : number of unique words in all songs(By artist)
-    u_art = []
+    u_art = set()
     art_count = defaultdict(int)
     song_word = defaultdict(int)
     art_word = defaultdict(int)
@@ -60,8 +87,9 @@ def process(songcsv):
         song_word[row['link']] += unique_words
         art_word[row['artist']] += unique_words
         art_count[row['artist']] += 1
+
         if row['artist'] not in u_art:
-            u_art.append(row['artist'])
+            u_art.add(row['artist'])
     return u_art,art_count,song_word,art_word
 
 def barChart(art_avg,out_file):
@@ -88,6 +116,7 @@ def main():
     song_data = csv.DictReader(sys.stdin)
     unique_artist,art_count,song_word,art_word = process(song_data)
     art_avg = defaultdict(int)
+    sorted_avg = []
     for key in art_word:
         art_avg[key] = art_word[key] / art_count[key]
         sorted_avg = sorted(art_avg.items(), key = lambda x: x[0])
@@ -97,10 +126,12 @@ def main():
     print("Number of songs in the collection: %d" % len(song_word))
 
     sum = 0
+    temp = 0
     for key in song_word:
         sum += song_word[key]
         temp = sum / len(song_word)
-    print("Average number of unique words per song in the collection: %d" % temp)
+    #print only 5 digits after decmial points.
+    print("Average number of unique words per song in the collection:", round(temp,5))
 
     print("Average number of unique words per song of an artist in the collection:")
     for v in sorted_avg:
