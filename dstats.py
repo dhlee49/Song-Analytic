@@ -2,17 +2,21 @@
 
 #for sys input
 import sys
-#for csv file process
+#for saving barChart
+import os
+#for csv file process\
 import csv
 #matplot for barchart plotting
 import matplotlib.pyplot as plt
+
 #defaultdict to store processed inputs
 from collections import defaultdict
 #Regexp to process lyric words removing punctuations
 #stopwords to remove common high frequency english words with low values
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
-
+#directory of current file
+__dirpath__ = os.path.dirname(__file__)
 def unique_set(list_in):
 #in: list with potential redundancy
 #return: list with unique elements
@@ -60,9 +64,9 @@ def process(songcsv):
             u_art.append(row['artist'])
     return u_art,art_count,song_word,art_word
 
-def barChart(art_avg):
+def barChart(art_avg,out_file):
 #in: Dictionary of artist : average unique words in songs by artist
-#prints barChart that displays top 10 artists with unique words
+#saves barChart that displays top 10 artists with unique words in out_file
 #return: none
     x = []
     y = []
@@ -77,7 +81,7 @@ def barChart(art_avg):
     plt.rcParams.update({'font.size': 7})
     plt.bar(x,y)
     plt.suptitle('Top 10 songs with unique number of words')
-    plt.show()
+    plt.savefig(out_file)
     return
 
 def main():
@@ -101,7 +105,10 @@ def main():
     print("Average number of unique words per song of an artist in the collection:")
     for v in sorted_avg:
         print("%d" % v[1])
-    barChart(art_avg)
+    #saving barChart as form filename.fileformat
+    f_output  = os.path.join(__dirpath__, './barChart.png')
+
+    barChart(art_avg,f_output)
 
 if __name__ == "__main__":
     main()

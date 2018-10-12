@@ -42,9 +42,11 @@ def tf_idf(t_o,d_o,size):
     word_score = defaultdict(int)
     for k in t_o:
         #Limited precision to 5 digits after decimal point
+        #The calculation of idf was obtained from tutorial slide
+        #which is slightly different from Sci-kit calculation of log10 of (1+n / 1+ doc_occurnace)
         word_score[k] = round((1+ math.log10(t_o[k])) * math.log10(size/d_o[k]),5)
-    #return top 50 or less(if there arent 50) important words in word socre
 
+    #sort top 50 or less(if there arent 50) important words in word socre
     if(len(word_score) < 50):
         result =  sorted(word_score.items(),key = lambda x : x[1], reverse = True)
     else :
