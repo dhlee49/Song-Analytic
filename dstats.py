@@ -61,11 +61,18 @@ def token_words(lyric):
 #that is not punctuation & stopwords(nltk.stopwords)
     lyric = lyric.lower()
     #tokenizer that will tokenize lyric('text') into words without punctuation
-    tokenizer = RegexpTokenizer(r'\w+')
+    #will split aphostrophe words into 2 seperate words but its okay as we only care about full words
+    # e.g : would've = would ve but this is fine as we know stopwords will remove ve
+    # tweetTokenizer was producing very irregular words in lyric such as (8, numbers and was dist
+
+    #tokenize word into alphabets only
+    tokenizer = RegexpTokenizer(r'[a-z]+')
     #apply tokenizer
     words = tokenizer.tokenize(lyric)
     #convert list of stopwords to set of stopwords for faster access
     en_stopwords = set(stopwords.words('english'))
+
+    #we remove stopwords in words
     words_lyric = [w for w in words if not w in en_stopwords]
     return words_lyric
 
