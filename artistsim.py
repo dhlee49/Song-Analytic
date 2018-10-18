@@ -10,6 +10,12 @@ from artistprofiling import to_and_do
 from songprofiling import tf_idf
 from songsim import jaccard,fix
 def process(songdata,art_id1,art_id2):
+    """
+    in: songdata (csvfile), 2 artist ids(int)
+    Process the input csv file, compute tf_idf of each artist,
+    then applies jaccard to specific artist
+    return: jaccard value (intersection/ Union)
+    """
     #make id2 comes later than id1 just for simplicity
     art_id1,art_id2 = fix(art_id1,art_id2)
     #sets for words in lyric
@@ -17,11 +23,11 @@ def process(songdata,art_id1,art_id2):
     set2 = set()
     #this program is under assumtpion that songs in csv file are grouped by artist
     #if not we can always change this to dictionary and add id to the artist in order we encounter(or any other way)
-    #set for artist count(if row['artist'] not in u_art it means we are looking at next artist)
-    u_art = set()
     csv_songdata = csv.DictReader(songdata)
     counter = 0
     t_o,d_o,size = to_and_do(csv_songdata)
+    #as we have artist as id we iterate over
+    #t_o dictionary to find correct artist
     for row in t_o:
         counter += 1
         if counter == art_id1:

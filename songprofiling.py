@@ -1,6 +1,6 @@
 #token_words to process lyric and unique_set
 #to filter redundant words when counting for doc_occurance
-from dstats import token_words, unique_set
+from dstats import token_words, unique_set, postProcess
 #sys for sys.in
 import sys
 #math for idf calculation
@@ -35,7 +35,7 @@ def doc_occurance(n_lyric, doc_occ):
 def to_and_do(csvfile):
     """
     in: csvfile from csvDictReader
-    return list of term_occurance in lyric, term_occurance in doc, list of names
+    return list of term_occurance per song, term_occurance in doc, list of names for printing
     """
     n_t_o = []
     n_n_list = []
@@ -53,7 +53,7 @@ def tf_idf(t_o,d_o,num,size):
     prints tf_idf value of specfic song given the term occurance of the song,document occurance, and the size of entire document
     return: none
     """
-    word_score = defaultdict(int)
+    word_score = defaultdict(float)
     for k in t_o:
         #Limited precision to 5 digits after decimal point
         #The calculation of idf was obtained from tutorial slide
@@ -69,13 +69,17 @@ def tf_idf(t_o,d_o,num,size):
     return word_score
 def main():
     #csvfile in
+    #sys.stdin
+    #open('smalldata.csv','rU')
     song_data = csv.DictReader(sys.stdin)
     #process csvfile and generate t_o : list of dictionaries in
     t_o,d_o,n_list= to_and_do(song_data)
-    pprint(d_o)
     list_itr = iter(n_list)
     for ele in t_o:
         print('tf_idf for song title: ', next(list_itr))
-        pprint(tf_idf(ele,d_o,50,len(t_o)))
+        w_s = tf_idf(ele,d_o,50,len(t_o))
+        for k in w_s:
+            print("{0:>13s} : {1:>8f}".format(k, w_s[k]))
+
 if __name__ == "__main__":
     main()

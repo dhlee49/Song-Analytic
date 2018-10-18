@@ -19,6 +19,8 @@
 #  pip freeze > requirements.txt
 #fi
 """
+#this is for building regular expression
+from string import ascii_lowercase
 #re for errortesting
 import re
 #for sys input
@@ -70,16 +72,20 @@ def token_words(lyric):
     en_stopwords = set(stopwords.words('english'))
     #we remove stopwords in words
     #and add few words that were in the words_lyric for cleaner process
-    words_lyric = [w for w in words if not w in en_stopwords]
-    #this is for me to see if there is anything that doens't follow regexp
-    f = open("errortext.txt", "w")
+    en_stopwords.add('chorus')
 
+    words_lyric = [w for w in words if not w in en_stopwords]
+
+    #this is for me to see if there is anything that doens't follow regexp
+    #f = open("errortext.txt", "w")
     #regexp = re.compile("\w+'\w+")
     #regexp2 = re.compile("ya+")
     #errorwords = [w for w in words_lyric if regexp2.match(w)]
     #for w in errorwords:
     #    f.write(w)
     #    f.write("\n")
+    words_lyric = postProcess(words_lyric)
+
     return words_lyric
 
 def process(songcsv):
@@ -95,10 +101,8 @@ def process(songcsv):
     art_count = defaultdict(int)
     song_word = defaultdict(int)
     art_word = defaultdict(int)
-    all_words = set()
     for row in songcsv:
         words = token_words(row['text'])
-        all_words = all_words.union(unique_set(words))
         unique_words = len(unique_set(words))
         #'link' is used as index instead of 'song'(title) as there might be a duplicate name for 'song'
         song_word[row['link']] += unique_words
@@ -106,9 +110,9 @@ def process(songcsv):
         art_count[row['artist']] += 1
         if row['artist'] not in u_art:
             u_art.add(row['artist'])
-    pprint(all_words)
     return u_art,art_count,song_word,art_word
-#def postProcess(lyric,doc):
+
+def postProcess(lyric):
     """
     in : lyric(in a form of list) that requires postProcessing, set of words in document so far for reference
     Words are processed in following ways
@@ -117,9 +121,78 @@ def process(songcsv):
         if words - words.last or worst + [a-z] gives us a match with one of
     out: lyric into document
     """
-    #this will be the small set that has already been used by this lyric as a combine key
-    #local = set()
-    #return doc
+
+    f = open("replacedtext.txt", "a")
+
+    cnt = 0
+
+    n_lyric = removerepeat(lyric,f)
+    n2_lyric = removeNonWord(n_lyric,f)
+    return n2_lyric
+
+#this function was not used due to time issue
+#it was taking O(n^2) per lyric and was bottlenecking tokenizer even worse
+def reducerepeat(word,lyric,file):
+    """
+    in : word to be compared ,whole lyric, file for result output for debuggin
+    return : lyric with no repeated words
+
+    apply regular expressions (word)+ and word(word.lastcharacter)+ to all lyrics and replace them with
+    smaller word
+    """
+    for w in lyric:
+    #if is not the same word, we want to see if this word is repetitive form of word we have
+        if word != w:
+            regexp = re.compile('(%s)+' % word)
+            regexp2 = re.compile('%s(%s)+' % (word, word[-1]))
+
+            if regexp.match(w):
+                if(regexp.match(w).span()[1] == len(w)):
+                    file.write("changed %s to %s \n" % (word,w))
+                    lyric.remove(w)
+                    lyric.append(word)
+
+                elif regexp2.match(w):
+                    if(regexp.match(w).span()[1] == len(w)):
+                        file.write('changed %s to %s \n' % (word,w))
+                        lyric.remove(w)
+                        lyric.append(word)
+    return lyric
+def removeNonWord(lyric,file):
+    """
+    in : word to be compared ,whole lyric, file for result output for debuggin
+    return : lyric with no repeated words
+
+    apply regular expressions [aeuio]+ to make sure
+    """
+    for w in lyric:
+        regexp = re.compile('[aeuio]')
+        match = regexp.search(w)
+        if not match:
+            lyric.remove(w)
+            file.write("this word %s is one without vowels\n" % w)
+    return lyric
+def removerepeat(lyric,file):
+    """
+    in : word to be compared ,whole lyric, file for result output for debuggin
+    return : lyric with no repeated words
+
+    apply regular expressions all alphabet+
+    """
+    #regstr is all repetition of single alphabet
+    regstr =""
+    for c in ascii_lowercase:
+        regstr = regstr+ c+'+'+'|'
+    regstr = regstr[:-1]
+    regexp = re.compile(regstr)
+    n_lyric = lyric
+    for w in lyric:
+        match = regexp.match(w)
+        if match:
+            if match.span()[1] == len(w):
+                n_lyric.remove(w)
+    return n_lyric
+
 def barChart(art_avg,out_file):
     """
     in: Dictionary of artist : average unique words in songs by artist , file with write option
@@ -164,9 +237,9 @@ def main():
     print("Average number of unique words per song in the collection:", round(temp,5))
 
     print("Average number of unique words per song of an artist in the collection:")
-    #for v in sorted_avg:
-    #    print("%d" % v[1])
-    #saving barChart as form filename.fileformat
+    for v in sorted_avg:
+        print("{0:>25s} : {1:>8f}".format(v[0],v[1]))
+    #saving barChart as form barChart.png in curr directory
     f_output  = os.path.join(__dirpath__, './barChart.png')
 
     barChart(art_avg,f_output)

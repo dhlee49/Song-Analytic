@@ -58,6 +58,6 @@ def main():
     parser.add_argument("song_id2",type = int, help = ' song_id2 : Integer n representing nth song in the data')
     args = parser.parse_args()
     jac = process(args.songdata, args.song_id1,args.song_id2)
-    print('Jaccard between : %d and %d is %f', (args.song_id1,args.song_id2,jac))
+    print('Jaccard between : %d and %d is %f' % (args.song_id1,args.song_id2,jac))
 if __name__ == "__main__":
     main()
