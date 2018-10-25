@@ -80,6 +80,5 @@ def main():
         w_s = tf_idf(ele,d_o,50,len(t_o))
         for k in w_s:
             print("{0:>13s} : {1:>8f}".format(k, w_s[k]))
-
 if __name__ == "__main__":
     main()

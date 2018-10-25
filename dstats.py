@@ -1,24 +1,11 @@
 #!/usr/bin/env python3
 """
-#In docker running start.sh will download necessary python libraries
-#which are matplotlib, nltk, nltk corpus(for stopwords)
-#below : codes for start.sh and 1 other file for running start.sh
-
-#start.sh:
-#ROOT="$(dirname "${BASH_SOURCE[0]}")"
-#
-#cd "$ROOT"
-#source "$ROOT/pyinstall.sh"
-
-#where pyinstall.sh:
-#if [[ -f ./requirements.txt ]]; then
-#  pip install --no-cache-dir -r ./requirements.txt
-#else
-#  pip install matplotlib
-#  pip install nltk
-#  pip freeze > requirements.txt
-#fi
+Required libraries :
+    matplotlib(and ones needed for matplot)
+    nltk
+    need nltk.stopwords to be installed
 """
+
 #this is for building regular expression
 from string import ascii_lowercase
 #re for errortesting
@@ -29,10 +16,10 @@ import sys
 import os
 #for csv file process\
 import csv
-#matplot for barchart plotting
+#Required for creating barChart in Docker
 import matplotlib; matplotlib.use('Agg')
+#matplot for barchart plotting
 import matplotlib.pyplot as plt
-from pprint import pprint
 #defaultdict to store processed inputs
 from collections import defaultdict
 #stopwords to remove common high frequency english words with low values
@@ -43,11 +30,12 @@ __dirpath__ = os.path.dirname(__file__)
 def unique_set(list_in):
     """
     in: list with potential redundancy
+    turn list into a set
     return: list with unique elements
     """
     u_set = set()
+
     for ele in list_in:
-        # check if ele is already in unique list
         if ele not in u_set:
             u_set.add(ele)
     return u_set
@@ -55,13 +43,16 @@ def unique_set(list_in):
 def token_words(lyric):
     """
     in: lyric(element of row['text'])
+    take whole lyric and convert it into list of words for analysis
+    apply few cleaning processes tot remove punctuation & stopwords & errors(Minor focus on this)
     return: list of words in the lyric
-    that is not punctuation & stopwords
     """
     lyric = lyric.lower()
     """
      tokenizer that will tokenize lyric('text') into words without punctuation
-     will split aphostrophe words into 2 seperate words but its okay as we only care about full words
+     it will split aphostrophe words into 2 seperate words but its okay
+     as most of the time words with aphostrophe are non-main verbs(would,should,etc)
+     non-main verbs are usually insignificant in most of the context and will be deleted
      e.g : would've = would ve but this is fine as we know stopwords will remove ve
      tweetTokenizer was producing very irregular words in lyric such as (8, numbers and was dist
     """
@@ -73,17 +64,13 @@ def token_words(lyric):
     #we remove stopwords in words
     #and add few words that were in the words_lyric for cleaner process
     en_stopwords.add('chorus')
+    #single letters aren't really words :)
+    for c in ascii_lowercase:
+        en_stopwords.add(c)
 
     words_lyric = [w for w in words if not w in en_stopwords]
 
-    #this is for me to see if there is anything that doens't follow regexp
-    #f = open("errortext.txt", "w")
-    #regexp = re.compile("\w+'\w+")
-    #regexp2 = re.compile("ya+")
-    #errorwords = [w for w in words_lyric if regexp2.match(w)]
-    #for w in errorwords:
-    #    f.write(w)
-    #    f.write("\n")
+    #postProcess of words_lyric
     words_lyric = postProcess(words_lyric)
 
     return words_lyric
@@ -163,10 +150,11 @@ def removeNonWord(lyric,file):
     in : word to be compared ,whole lyric, file for result output for debuggin
     return : lyric with no repeated words
 
-    apply regular expressions [aeuio]+ to make sure
+    apply regular expressions [aeuioy] to make sure it is a proper word
+        y was added for words such as 'cry', 'try', 'rhythm' that does not include vowel but may be a significant words
     """
     for w in lyric:
-        regexp = re.compile('[aeuio]')
+        regexp = re.compile('[aeuioy]')
         match = regexp.search(w)
         if not match:
             lyric.remove(w)

@@ -23,15 +23,8 @@ def process(songdata,song_id1,song_id2):
     csv_songdata = csv.DictReader(songdata)
     list_to,d_o,n_list= to_and_do(csv_songdata)
     #list_to is list of dictinaries of words in song starting from first.
-    for t_o in list_to:
-        #counter to keep track of # of records we walked through
-        counter += 1
-        if counter == song_id1:
-            #obtain keys only(words) from each song (top 50 words) then turn it into set for jaccard
-            set1 = set(tf_idf(t_o,d_o,50,len(n_list)).keys())
-        if counter == song_id2:
-            set2 = set(tf_idf(t_o,d_o,50,len(n_list)).keys())
-            break;
+    set1 = set(tf_idf(list_to[song_id1-1],d_o,50,len(n_list)).keys())
+    set2 = set(tf_idf(list_to[song_id2-1],d_o,50,len(n_list)).keys())
     return jaccard(set1,set2);
 def fix(a,b):
     """
@@ -50,7 +43,7 @@ def jaccard(set1,set2):
     """
     num = len(set1 & set2)
     denom = len(set1 | set2)
-    return round(num/denom,5)
+    return round(num/denom,10)
 def main():
     parser = argparse.ArgumentParser(description = 'Takes songdata(in csv), and 2 song_id then print jaccard value of the 2 song')
     parser.add_argument("songdata",type = argparse.FileType('r'), help = 'csvfile that has format {"artist","song(title)","link","text"}')
